@@ -50,6 +50,6 @@ rf_doesNotHaveConstructionYear
 
 set.seed(1)
 randomForest_All <- randomForest(y ~ .- extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
-                                               , data=water_table[water_table$has_construction_year==0,], ntree=500)
+                                               , data=water_table, ntree=500)
 
 randomForest_All

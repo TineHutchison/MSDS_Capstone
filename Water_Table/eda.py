@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import json
+from sklearn.linear_model import LogisticRegression
 
 #from bokeh.io import push_notebook, output_notebook
 from bokeh.plotting import figure, show
@@ -18,6 +19,9 @@ from bokeh.palettes import Spectral10
 current_dir = '/home/tine/PycharmProjects/pred498/MSDS_Capstone/Water_Table/'
 train_data = pd.read_csv(current_dir + 'tanzania-X-train.csv', header=0)
 train_target = pd.read_csv(current_dir + 'tanzania-y-train.csv', header=0)
+
+#Load the test data:
+test_data = pd.read_csv(current_dir + 'tanzania-x-test.csv', header=0)
 
 print(train_data.info())
 print(train_data.describe())
@@ -195,245 +199,40 @@ def transform_waterpoint_type(df, col):
 
 
 
+new_train = do_transformations(train_data)
+new_train['date_recorded'] = new_train.date_recorded.dt.year
+train_w_dummies = pd.get_dummies(new_train)
 
-# Setting up options for map graphics.
-mapoptions = GMapOptions(lat=train_data.latitude.mean(), lng=train_data.longitude.mean(), zoom=5)
+#logr = LogisticRegression(solver='saga', multi_class='multinomial')
+#logr.fit(train_w_dummies, train_target.status_group)
 
-p1 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-         title='Functional Water Points')
-p1.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional'],
-         color='green')
-p2 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-         title='Water Points Needing Repair')
-p2.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional needs repair'],
-         color='yellow')
-p3 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-         title='Non-Functional Water Points')
-p3.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'non functional'],
-         color='red')
-show(row(p1,p2,p3))
+new_test = do_transformations(test_data)
+new_test['date_recorded'] = new_test.date_recorded.dt.year
+test_w_dummies = pd.get_dummies(new_test)
 
+for col in [x for x in train_w_dummies.columns if x not in test_w_dummies.columns]:
+    test_w_dummies[col] = 0
 
-def map_numeric_var(df, var):
-    print(var)
-    cmap = linear_cmap(var, Spectral10, df[var].min(), df[var].max())
-    p1 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-             title='Functional Water Points by ' + var, tools=[])
-    p1.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional'],
-              color=cmap)
-    p2 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-             title='Water Points Needing Repair by ' + var, tools=[])
-    p2.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional needs repair'],
-              color=cmap)
-    p3 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY', mapoptions, plot_width=350, plot_height=350,
-             title='Non-Functional Water Points by ' + var, tools=[])
-    p3.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'non functional'],
-              color=cmap)
-    show(row(p1,p2,p3))
+test_w_dummies.drop(columns=[x for x in test_w_dummies.columns if x not in train_w_dummies.columns], inplace=True)
 
-for vars in train_data.select_dtypes(['int64','float64']):
-    print(vars)
-for var in ['amount_tsh', 'gps_height','population','construction_year']:
-    map_numeric_var(train_data, var)
+#submission = pd.DataFrame()
+#submission['id'] = test_w_dummies.id
+#submission['status_group'] = logr.predict(test_w_dummies)
 
+# p = figure()
+# p.line(train_data[train_target['status_group'] == 'functional'].construction_year.unique(),
+#        train_data[train_target['status_group'] == 'functional'].groupby('construction_year').sum())
+# show(p)
 
-# TRANSFORM: Convert to datetime
-train_data.date_recorded = pd.to_datetime(train_data.date_recorded)
 
-map_numeric_var(train_data, 'date_recorded')
-train_data.date_recorded.describe()
-# In[ ]:
+#import tensorflow as tf
 
+#tf_train_data = tf.estimator.inputs.pandas_input_fn(train_w_dummies, train_target.status_group, shuffle=True)
 
-map_numeric_var(train_data, 'amount_tsh')
+import googlemaps
+gmaps = googlemaps.Client(key='AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY')
 
+latlon = [(x.latitude, x.longitude) for index, x in train_data.iterrows()]
 
-# In[ ]:
 
-
-"""
-Variables
-
-amount_tsh - Total static head (amount water available to waterpoint)
-date_recorded - The date the row was entered
-funder - Who funded the well
-gps_height - Altitude of the well
-installer - Organization that installed the well
-longitude - GPS coordinate
-latitude - GPS coordinate
-wpt_name - Name of the waterpoint if there is one
-num_private -
-basin - Geographic water basin
-subvillage - Geographic location
-region - Geographic location
-region_code - Geographic location (coded)
-district_code - Geographic location (coded)
-lga - Geographic location
-ward - Geographic location
-population - Population around the well
-public_meeting - True/False
-recorded_by - Group entering this row of data
-scheme_management - Who operates the waterpoint
-scheme_name - Who operates the waterpoint
-permit - If the waterpoint is permitted
-construction_year - Year the waterpoint was constructed
-extraction_type - The kind of extraction the waterpoint uses
-extraction_type_group - The kind of extraction the waterpoint uses
-extraction_type_class - The kind of extraction the waterpoint uses
-management - How the waterpoint is managed
-management_group - How the waterpoint is managed
-payment - What the water costs
-payment_type - What the water costs
-water_quality - The quality of the water
-quality_group - The quality of the water
-quantity - The quantity of water
-quantity_group - The quantity of water
-source - The source of the water
-source_type - The source of the water
-source_class - The source of the water
-waterpoint_type - The kind of waterpoint
-waterpoint_type_group - The kind of waterpoint
-"""
-
-
-# In[ ]:
-
-
-def histogram(df, var):
-    x = list(df.status_group.unique())
-    counts = [len(df[df['status_group'] == i][var]) for i in x]
-    p = figure(x_range=x, title="{} count by Status".format(var),
-           toolbar_location=None, tools="", plot_height=250)
-    p.vbar(x=x, top=counts, width=0.9)
-    p.xgrid.grid_line_color = None
-    p.y_range.start = 0
-    show(p)
-    
-    
-def explore_variable(df, var):
-    print('#'*80)
-    print('Exploring variable: {}'.format(var))
-    print(df[var].describe())
-    df[var].hist()
-
-
-# In[ ]:
-
-
-continuous_vars = ['amount_tsh', 'gps_height', 'longitude', 'latitude', 'population', 
-                   'construction_year', 'payment', 'payment_type', 'water_quality',  'quantity']
-date_vars = ['date_recorded']
-
-
-# In[ ]:
-
-
-for var in train_data.columns:
-    length = len(train_data[var].unique())
-    if length <= 25:
-        train_data[var] = train_data[var].astype('category')
-train_data.date_recorded = pd.to_datetime(train_data.date_recorded)
-
-
-# In[ ]:
-
-
-train_data.info()
-
-
-# In[ ]:
-
-
-from sklearn.linear_model import LinearRegression
-
-lm = LinearRegression()
-lm.fit(train_data, train_target)
-
-
-# In[ ]:
-
-
-objvars = ['funder', 'installer', 'wpt_name', 'subvillage', 'lga', 'ward', 'scheme_name']
-
-
-# In[ ]:
-
-
-for var in objvars:
-    print(var, len(train_data[var].unique()))
-
-
-# In[ ]:
-
-
-train_trimmed = train_data.drop(columns=objvars)
-
-
-# In[ ]:
-
-
-lm = LinearRegression()
-lm.fit(train_trimmed, train_target)
-
-
-# In[ ]:
-
-
-train_trimmed.info()
-
-
-# In[ ]:
-
-
-train_trimmed[train_trimmed.amount_tsh == 'hand pump']
-
-
-# In[ ]:
-
-
-for continuous_var in continuous_vars:
-    train_trimmed[[continuous_var]].boxplot(vert=True)
-    plt.show()
-
-
-# In[ ]:
-
-
-for continuous_var in train_data.select_dtypes(['int64','float64']).columns.values:
-    print(continuous_var)
-    train_data[[continuous_var]].hist(bins=20, by=train_target.status_group, xrot=3/4)
-    plt.show()
-
-
-# In[ ]:
-
-
-for var in train_data.select_dtypes('object').columns.values:
-    print(var,train_data[var].value_counts()[:20])
-
-
-# In[ ]:
-
-
-def top_n_categories(n, df, var):
-    top_n = list(df[var].value_counts()[:n].index.values)
-    return df[var].apply(lambda x: 'Other' if x not in top_n else x).astype('category')
-
-
-# In[ ]:
-
-
-top_n_categories(20, train_data, 'funder')
-
-
-# In[ ]:
-
-
-get_ipython().run_line_magic('pinfo', 'pd.DataFrame.boxplot')
-
-
-# In[ ]:
-
-
-train_data.basin.value_counts()
-
+elevation()

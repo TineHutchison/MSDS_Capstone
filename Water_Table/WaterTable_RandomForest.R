@@ -1,55 +1,46 @@
-#setwd("~/Documents/Predict 498/")
-water_table <- read.csv("MSDS_Capstone/Water_Table/tanzania-X-train.csv")
-water_table_y <- read.csv("MSDS_Capstone/Water_Table/tanzania-y-train.csv")
+RootFilePath = "MSDS_Capstone//Water_Table//"
+OutputFilePath = "MSDS_Capstone//Water_Table//"
+source(paste(RootFilePath,"WaterTable_LoadAndClean.R", sep=""))
 
-water_table_test <- read.csv("MSDS_Capstone/Water_Table/tanzania-X-test.csv")
-
-library(lubridate)
+load_packages("randomForest")
 
 
-water_table$y <- water_table_y$status_group
-maxYear <- 2013
-
-
-cleanData <- function(data) {
-  data$date_recorded <- as.Date(data$date_recorded) 
-  data$age <- 0
-  data[data$construction_year>0,]$age <- maxYear -  data[data$construction_year>0,]$construction_year
-  
-  data$has_population <- 0
-  data[data$population>0,]$has_population <- 1
-  
-  data$has_amount_tsh <- 0
-  data[data$amount_tsh>0,]$has_amount_tsh <- 1
-  
-  data$has_construction_year <- 1
-  data[data$construction_year==0,]$has_construction_year <- 0 
-  
-  return(data)
-}
-
-water_table <- cleanData(water_table)
-water_table_test <- cleanData(water_table_test)
-
-
-
-
-
-library(randomForest)
-set.seed(1)
-rf_hasConstructionYear <- randomForest(y ~ .- extraction_type - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
-                                       , data=water_table[water_table$has_construction_year==1,], ntree=500)
-rf_hasConstructionYear
-set.seed(1)
-rf_doesNotHaveConstructionYear <- randomForest(y ~ .- extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
-                                               , data=water_table[water_table$has_construction_year==0,], ntree=500)
-
-rf_doesNotHaveConstructionYear
-
-
-
-set.seed(1)
-randomForest_All <- randomForest(y ~ .- extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
+set.seed(42)
+randomForest_AllData <- randomForest(water_table_y$status_group ~ . - id  - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
                                                , data=water_table, ntree=500)
 
-randomForest_All
+randomForest_AllData
+importance(randomForest_AllData)
+
+writeFile("Random Forest Simple", predict(randomForest_AllData, water_table_test))
+
+
+
+
+#  age imputation which gives a slight performance boost but is REALLY, REALLY slow, so I commented it out for now... 
+# 
+# #### IMPUTING AGE FROM A RANDOM FOREST.... 
+# #.... Lets find a better method to impute than this. 
+# #.... We're already tracking that this has been imputed based on the variable has_construction_year
+# set.seed(42)
+# rf_hasConstructionYear <- randomForest(age ~ .  - date_recorded - latitude -longitude -region - region_code - id - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
+#                                        , data=water_table[water_table$has_construction_year==1,], ntree=50)
+# 
+# water_table$age_imp <- water_table$age
+# water_table[water_table$has_construction_year==0,]$age_imp <- predict(rf_hasConstructionYear, water_table[water_table$has_construction_year==0,])
+# water_table$age_imp <- round(water_table$age_imp)
+# 
+# water_table_test$age_imp <- water_table_test$age
+# water_table_test[water_table_test$has_construction_year==0,]$age_imp <- predict(rf_hasConstructionYear, water_table_test[water_table_test$has_construction_year==0,])
+# water_table_test$age_imp <- round(water_table_test$age_imp)
+# 
+
+# set.seed(42)
+# randomForest_AllData_ImputedAge <- randomForest(water_table_y$status_group ~ . - id  - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
+#                                                 , data=water_table, ntree=500)
+# 
+# randomForest_AllData_ImputedAge
+# 
+# importance(randomForest_AllData_ImputedAge)
+# 
+# writeFile("Random Forest Simple with Age Imputation", predict(randomForest_AllData_ImputedAge, water_table_test))

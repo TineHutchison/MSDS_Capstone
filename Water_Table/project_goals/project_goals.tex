@@ -1,0 +1,309 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[12pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{letterpaper} % or letterpaper (US) or a5paper or....
+\geometry{margin=1in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+
+\usepackage{graphicx} % support the \includegraphics command and options
+\graphicspath{ {images/} }
+
+\usepackage{pdfpages}
+\pdfminorversion=7
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+ 
+\urlstyle{same}
+
+\usepackage{hanging}
+
+\usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%% PACKAGES
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+% These packages are all incorporated in the memoir class to one degree or another...
+
+%%% HEADERS & FOOTERS
+\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+\pagestyle{fancy} % options: empty , plain , fancy
+\renewcommand{\headrulewidth}{0pt} % customise the layout...☺
+\lhead{}\chead{}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+%%% SECTION TITLE APPEARANCE
+\usepackage{sectsty}
+\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+% (This matches ConTeXt defaults)
+
+% image alignment
+\usepackage[export]{adjustbox}
+
+
+%%% ToC (table of contents) APPEARANCE
+% \usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+% \usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+% \renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+% \renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+
+%%% END Article customizations
+
+
+%%% The "real" document content comes below...
+
+
+%%%%%%%%%%%%%%%%
+% Title Page
+%%%%%%%%%%%%%%%%
+
+\usepackage{titling}
+\title{Pump It Up: Mining the Water Table\\
+\Large Project Goals}
+\author{Daniel Beutler\\
+Austin Harrison\\
+Frances Carr\\
+Tine Hutchinson}
+\date{\today}
+
+
+\begin{document}
+\begin{titlingpage} %This starts the title page
+\begin{center}
+\vspace{2cm} %You can control the vertical distance
+\begin{huge} 
+\textbf{\thetitle} \\
+\end{huge}
+\vspace{3cm} %You can control the vertical distance
+\includegraphics[height=3cm]{logo}\\ %Put the logo you want here
+\large\theauthor\\
+\vspace{2cm} %Put the distance you need.
+\thedate\\
+\vspace{2cm} %Put the distance you need.
+
+Submitted to:\\* 
+Dr. Donald Wedding\\*
+Minister\\*
+Tanzanian Ministry of Water\\*
+donald.wedding@northwestern.edu  
+
+\end{center}
+\end{titlingpage}
+
+\tableofcontents
+\newpage
+
+\addcontentsline{toc}{section}{Cover Letter}
+
+% April 22, 2018
+
+%%%%%%%%%%%%%%%%
+% Cover Letter
+%%%%%%%%%%%%%%%%
+
+\setlength{\parskip}{0.5em}
+\includegraphics[height=20mm, right]{logo}\\ %Put the logo you want here
+\begin{flushleft}
+\today\\*
+\vspace{1cm}
+Dr. Donald Wedding\\
+Minister\\
+Tanzanian Ministry of Water\\
+\vspace{1cm}
+\textbf{RE: Pump it Up: Data Mining the Water Table - Project Goals\\}
+\vspace{1cm}
+
+Dear Dr. Wedding,  
+
+Thank you for the consideration of DAFT PUMPS to assist the Tanzanian Ministry of Water with the classification and prediction of the operational condition of water pumps based on your Ministry's data as well as Taarifa. Please find attached DAFT PUMPS'  project goals documentation. We hope that this gives you a complete description of our insight into the project, preliminary plan and intended deliverables throughout this process.   
+
+Please do not hesitate to reach us if you need further clarification at any time.  
+
+\bigskip
+Sincerely,  
+
+\theauthor
+
+\end{flushleft}
+\newpage
+
+%%%%%%%%%%%%%%%%
+% Main Paper
+%%%%%%%%%%%%%%%%
+
+\section{The Problem}
+The purpose of this project is to classify and predict the operational condition of various waterpoints (or pumps) in the throughout Tanzania using the following labels in Table 1. An educated understanding on previous classifications in order to predict future and additional waterpoint operations will help to provide both optimized processes as well as continuous clean water to the included communities throughout Tanzania.  
+
+\begin{table}[h!]
+    \caption{Label Titles \& Descriptions for Waterpoint Classifications}
+    \label{table:1}
+    \begin{tabular}{ll}  
+        \toprule
+        Label    & Description \\
+        \midrule
+        Functional              & Waterpoint is operational and there are no repairs needed \\
+        Functional needs repair & Waterpoint is operational but needs repairs \\
+        Non-functional          & Waterpoint is not operational \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+These predictions will be based on a number of variables (discussed below)  from well funding, location and altitude, as well as the cost, quality and source of the water. Additionally, these predictions will be predicted and assessed using a training data set to predict classifications of a test data set.
+
+As access to water is essential to survival, previous research has been conducted to assist Tanzania with water pump access and assessment. Darmatasia \& Arymurthy (2016) used XGBoost to help predict the status of water pumps in the region with an 80\% accuracy, and discussed a number of other studies that suggested the use of Artificial Neural Networks (ANN) and Support Vector Machines (SVM). The study was conducted on what appears to be the same data set.
+
+Additionally, Jiménez \& Pérez-Foguet (2011) referenced that an estimated 30-46\% of the Tanzanian water pumps were non-functioning. This will be described below but, based on the current data, is still accurate years later. According to the team:
+
+\begin{quote}
+    ``In the first five years of operation, about 30\% of water points become non-functional. Only between 35\% and 47\% of water points are working 15 years after installation, depending on the technology. By categories, hand pumps are the less durable of the technologies studied. We suggest that more emphasis has to be placed on the creation of community capacities to manage the services during and after the installation of water points.'' (Jiménez \& Pérez-Foguet, 2011, p. 948)
+\end{quote}
+
+Jiménez \& Pérez-Foguet (2011) also suggest the use of water point mapping (WPM):
+
+\begin{quote}
+    ``An exercise whereby the geographical positions of all improved water points (WP) in an area are gathered in addition to management, technical and demographical information. This information is collected using GPS and a questionnaire located at each improved water point. The data is entered into a geographical information system and then correlated with available demographic, administrative, and physical data. The information is displayed using digital maps.'' (Welle, 2005)
+\end{quote}
+
+
+\section{The Data}
+The data we are provided with consists of a training set, with associated expected responses, and a testing set. We will build our models on the training set, make predictions based on the testing set, and submit our predictions to a 3rd party validation service that will let us know how well we did.  
+
+The predictive variables consist of a total of 39 columns and an ID column. There is information about the physical location of the wells (latitude, longitude, altitude, region, district, ward, local population), information about the building of the well (funder, installer, whether there was a public planning meeting or not, whether it was built with a permit or not, the year of construction), and the operation of the well (the management and its structure, the price charged, the amount of water, the quality of the water, the source of the water, how the water is extracted).   
+
+The well can be classified as either functional, functional but needing repair, or non-functional.  
+
+The training dataset consists of 59,400 entries. There are not a tremendous amount of completely missing data points, with the exception of the `scheme\_name' column, which is only has 31,234 non-missing values. Every other row with some missing data still has more than 55,000 rows. Missing is one thing we don't have to worry about too much with the training dataset, the same can not be said for data that doesn't seem to make sense. For instance, at least one well appears to be at latitude and longitude 0, 0 which is thousands of miles to the west, in the Atlantic Ocean. It's also the case that the testing data has many more missing data. As such, we'll examine each variable to determine the best approach to filling in any missing or out of range data so that we can be sure that every variable is usable for our predictions.  
+
+Many of the non-numeric variables have only a handful of possible values. We'll convert these variables to be categorical in the system (`category' in pandas, `factor' in R, etc.). Other non-numeric variables have hundreds or thousands of possible values. What we find with these is that there are some values that repeat more than others. For these types of variables, we'll create categories for the top 20 possible values and then create an `other' type that will hold values that don't repeat as often. Note that top 20 is arbitrary and we may expand or contract this number as needed to get the best results.  
+
+\subsection{Preliminary Exploratory Data Analysis}
+\subsubsection{The Predicted Variable}
+
+The goal is to predict if a well is functioning, in need of repair, or not functioning. So how many wells fall into each category?  
+
+
+\begin{table}[h!]
+    \caption{Target Variable Distribution}
+    \label{table:2}
+    \begin{tabular}{llll}  
+        \toprule
+        Status    & Functional & Functional needs repair & Non-functioning \\
+        \midrule
+        Count & 32,259 & 4,317 & 22,824 \\
+        Percentage & 54.31\% & 7.27\% & 38.42\% \\
+        \bottomrule
+    \end{tabular}
+    \centering
+\end{table}
+\vspace{26mm} %You can control the vertical distance
+
+\begin{figure}[h!]
+\caption{Geographical distribution of Water Points, by functional level}
+\label{fig:figure1}
+\includegraphics[width=1\textwidth]{geo_distrib1}\\
+\centering
+\end{figure}
+
+\vspace{10mm} %You can control the vertical distance
+\begin{figure}[h!]
+\caption{Height distribution for all wells}
+\label{fig:figure2}
+\includegraphics[width=0.7\textwidth]{gps_height1}\\ 
+\centering
+\end{figure}
+
+We have already identified that construction year is primarily distributed by region, with red representing pumps with construction years missing, and green representing pumps with construction year available.  
+
+Although this factor has 35\% missing values it appears to improve model performance; our initial investigation indicates that models that can incorporate this data when included perform better. For example, a random forest has a out-of-bag error of 2.6\% lower when run on a random sample of data of the same size. We are working on a model improving imputation of the construction year data. 
+
+
+\begin{figure}[h!]
+\caption{Missing Values by Region}
+\label{fig:figure3}
+\includegraphics[width=0.4\textwidth]{missing_values_map1} 
+\includegraphics[width=0.45\textwidth]{missing_values_region1} 
+\centering
+\end{figure}
+
+
+\section{The Tools}
+
+There are many platforms and/or languages available that can be used to perform the analysis and predictive modeling. The platforms and languages all differ in their implementations but most of them have similar capabilities with regards to modeling techniques and data exploration.  
+
+\subsection{Exploratory Data Analysis}
+Exploratory data analysis involves examining the provided data to identify important aspects that will affect predictive models, including outliers and missing values. Often, visualizations are used to gain insights into the data and there are many options to consider how to create these visualizations. The options considered for use in this project are Python (using the packages matplotlib, seaborn, bokeh and plot.ly), R (using ggplot2), Tableau, and Power BI.  
+
+\subsection{Predictive Modeling}
+Though selecting the right modeling tools for the job are important, the goals of the project do not include comparing the various options. Once the options have been evaluated, the team will focus on building and improving a predictive model in the chosen language or platform.  
+
+Tools considered for the predictive modeling in this project include: ANGOSS, SAS Enterprise Miner, Azure, scikit-learn and tensorflow packages in Python and caret and randomForest libraries in R. ANGOSS and Enterprise Miner have the advantage of having a graphical user interface that makes setting parameters and visualizing the flow of data manipulation and prediction. Python and R have the advantage of the availability of extensive packages and libraries that make them very flexible.
+
+\section{The Deliverables}
+
+\subsection{Proposed Schedule}
+Currently we intend to deliver according to the schedule outlined below:
+
+\begin{figure}[h!]
+    \includegraphics[width=1\textwidth]{proposed_schedule1}\\ 
+    \centering
+\end{figure}
+
+\textbf{Weekly status reports}  
+
+We will keep your regularly updated with weekly status reports for weeks 3-10.\\
+
+\textbf{Initial Findings – 5/13/2018}  
+
+On 5/13 we will provide a summary of our initial findings. This initial report will include:  
+
+\begin{itemize}
+\item An Executive Summary
+\item An outline of the publicly available code and material review. This will allow us to build a better model with less resources, while also providing you with a consolidated view of the most up-to publicly available information.
+\item A rundown of our Exploratory Data Analysis with notations on interesting data artifacts.
+\item An explanation of the tentative best model and modeling results that had been submitted to the Pump It Up data competition
+\item A proposed dashboard. This tentatively will include some map-based data, along with key measures to allow a quick insight into the state of the water system.
+\end{itemize}
+
+\textbf{Final Report – 5/29/2018}  
+
+On 5/29, we will include our completed final written report. In this report we will include:  
+\begin{itemize}
+\item An Executive Summary
+\item The completed review of publicly available materials and code, along with an explanation of how we incorporated this information into our project
+\item A detailed explanation of the best model we found along with details about alternatives that were explored. We will include scoring information for all models and technologies considered.
+\item Recommendation for further investigation
+\item Detailed analysis of the expected costs and time associated with the upkeep of the modeling and dashboard systems
+\item In addition to a thorough review of our initial Exploratory Data Analysis findings, we will include any additional interesting aspects of the data that we discovered as part of the final modeling and dashboard creation
+\item The source code for our project
+\item The final dashboard.
+\end{itemize}
+
+\textbf{Oral Presentation – Week of 6/4}  
+ 
+To wrap up this project we will present an oral report summarizing our findings that were included in the Final written report. We expect this to last one hour. At the end of the presentation we will provide all materials presented.  
+
+
+\section*{References}
+
+ \begin{hangparas}{.25in}{1}
+
+    Welle, K. (2005). \emph{Learning for advocacy and good practice}—WaterAid water point mapping: Rep. of findings based on country visits to Malawi and Tanzania. Retrieved from \url{http://www.wateraid.org/documents/plugin _documents/waterpointmappingmalawitanzaniaweb.pdf}
+ \end{hangparas}
+\end{document}

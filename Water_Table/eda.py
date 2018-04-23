@@ -272,3 +272,19 @@ def map_numeric_var(df, var):
     show(row(p1,p2,p3))
 
 map_numeric_var(new_train, 'gps_height')
+
+latlon = [[x.latitude, x.longitude] for ix, x in new_test[new_test.gps_height == 0].iterrows()]
+results = dict()
+gmaps = googlemaps.Client(key='AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY')
+for x in range(0, len(latlon), 500):
+    if x + 500 > len(latlon):
+        results[x] = googlemaps.elevation.elevation(gmaps, latlon[x:-1])
+        continue
+    results[x] = googlemaps.elevation.elevation(gmaps, latlon[x:x+500])
+
+
+with open(current_dir + 'test-elevation.csv', 'w') as f:
+    f.write('lat,lon,elev\n')
+    for key in results:
+        for row in results[key]:
+            f.write('{0:.5f},{1:.5f},{2:.5f}\n'.format(row['location']['lat'], row['location']['lng'], row['elevation']))

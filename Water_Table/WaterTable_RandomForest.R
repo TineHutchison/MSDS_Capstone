@@ -6,13 +6,13 @@ load_packages("randomForest")
 
 
 set.seed(42)
-randomForest_AllData <- randomForest(water_table_y$status_group ~ . - id  - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
+randomForest_AllData <- randomForest(water_table_y$status_group ~ . - id + month(date_recorded) -gps_height - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
                                                , data=water_table, ntree=500)
 
 randomForest_AllData
 importance(randomForest_AllData)
 
-writeFile("Random Forest Simple", predict(randomForest_AllData, water_table_test))
+writeFile("Random Forest Simple with missing and imputed elevation added", predict(randomForest_AllData, water_table_test))
 
 
 

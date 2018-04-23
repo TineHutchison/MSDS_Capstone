@@ -1,4 +1,5 @@
 import pandas as pd
+import csv
 import matplotlib.pyplot as plt
 import json
 from sklearn.linear_model import LogisticRegression
@@ -234,5 +235,40 @@ gmaps = googlemaps.Client(key='AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY')
 
 latlon = [(x.latitude, x.longitude) for index, x in train_data.iterrows()]
 
+with open(current_dir + 'elevation.csv', 'w') as f:
+    f.write('lat,lon,elev\n')
+    for key in results:
+        for row in results[key]:
+            f.write('{0:.5f},{1:.5f},{2:.5f}\n'.format(row['location']['lat'], row['location']['lng'], row['elevation']))
 
-elevation()
+def read_elevs():
+    with open(current_dir + 'elevation.csv', newline='') as csvfile:
+        elev = list(csv.reader(csvfile, delimiter=','))
+
+elv = {'{},{}'.format(x[0], x[1]): x[2] for x in elev[1:]}
+
+i = 0
+for ix, row in new_train[new_train.gps_height == 0].iterrows():
+        key = '{0:.5f},{1:.5f}'.format(row.latitude, row.longitude)
+        if key in elv.keys():
+            new_train.gps_height = elv[key]
+
+def map_numeric_var(df, var):
+    print(var)
+    cmap = linear_cmap(var, Spectral10, df[var].min(), df[var].max())
+    p1 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY',mapoptions, plot_width=300, plot_height=300,
+             title='Functional Water Points')
+    p1.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional'],
+              color=cmap)
+    p2 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY',mapoptions, plot_width=300, plot_height=300,
+             title='Water Points Needing Repair')
+    p2.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'functional needs repair'],
+              color=cmap)
+    p3 = gmap('AIzaSyDdmZU-YmmPrBVhMarTxPBbEv7N_vdrXjY',mapoptions, plot_width=300, plot_height=300,
+             title='Non-Functional Water Points')
+    p3.circle(x='longitude', y='latitude', source=train_data[train_target['status_group'] == 'non functional'],
+              color=cmap)
+    #show(p1)
+    show(row(p1,p2,p3))
+
+map_numeric_var(new_train, 'gps_height')

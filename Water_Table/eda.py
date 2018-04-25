@@ -17,9 +17,10 @@ from bokeh.palettes import Spectral10
 
 
 #Loading the training data
-current_dir = '/home/tine/PycharmProjects/pred498/MSDS_Capstone/Water_Table/'
+current_dir = '/Users/thutchison15/PycharmProjects/MSDS_Capstone/Water_Table/'
 train_data = pd.read_csv(current_dir + 'tanzania-X-train.csv', header=0)
 train_target = pd.read_csv(current_dir + 'tanzania-y-train.csv', header=0)
+wards = pd.read_csv(current_dir + 'TZ_wards_regions.csv')
 
 #Load the test data:
 test_data = pd.read_csv(current_dir + 'tanzania-x-test.csv', header=0)
@@ -288,3 +289,10 @@ with open(current_dir + 'test-elevation.csv', 'w') as f:
     for key in results:
         for row in results[key]:
             f.write('{0:.5f},{1:.5f},{2:.5f}\n'.format(row['location']['lat'], row['location']['lng'], row['elevation']))
+
+ward = list()
+def read_wards():
+    with open(current_dir + 'TZ_wards_regions.csv', newline='') as csvfile:
+        ward = list(csv.reader(csvfile, delimiter=','))
+
+wards = {row[1]: row[0] for row in ward[1:]}

@@ -296,3 +296,45 @@ def read_wards():
         ward = list(csv.reader(csvfile, delimiter=','))
 
 wards = {row[1]: row[0] for row in ward[1:]}
+
+ward_error = list()
+for dd_ward in train_data.ward.unique():
+    if dd_ward not in wards:
+        ward_error.append(dd_ward)
+i = 0
+for dd_ward in test_data.ward.unique():
+    if (dd_ward not in wards) and (dd_ward not in ward_error):
+        i += 1
+        print(dd_ward, i)
+        ward_error.append(dd_ward)
+
+TZ_Region = list()
+for ix, row in train_data.iterrows():
+    if row.ward not in wards:
+        TZ_Region.append([row.id, row.region])
+        continue
+    if row.region.upper() != wards[row.ward]:
+        TZ_Region.append([row.id, wards[row.ward]])
+    else:
+        TZ_Region.append([row.id, row.region])
+
+TZ_Region_test = list()
+for ix, row in test_data.iterrows():
+    if row.ward not in wards:
+        TZ_Region_test.append([row.id, row.region])
+        continue
+    if row.region.upper() != wards[row.ward]:
+        TZ_Region_test.append([row.id, wards[row.ward]])
+    else:
+        TZ_Region_test.append([row.id, row.region])
+
+
+with open(current_dir + 'TZ_region_train.csv', 'w') as f:
+    f.write('id,TZ_Region\n')
+    for row in TZ_Region:
+        f.write('{},{}\n'.format(row[0],row[1]))
+
+with open(current_dir + 'TZ_region_test.csv', 'w') as f:
+    f.write('id,TZ_Region\n')
+    for row in TZ_Region_test:
+        f.write('{},{}\n'.format(row[0],row[1]))

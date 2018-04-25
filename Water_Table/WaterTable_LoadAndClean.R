@@ -23,6 +23,8 @@ cleanData <- function(data) {
   data$has_bad_latOrLong <- 0
   data[(round(data$latitude,3) ==0 | round(data$longitude,3) == 0),]$has_bad_latOrLong <- 1 
   
+  data$monthRecorded <- month(data$date_recorded)
+  
   data <- addElevation(data)
   return(data)
 }
@@ -54,6 +56,69 @@ addElevation <- function(data) {
   return(data)
 }
 
+addFunderCategory <- function(data) {
+  ########### START::: shameless borrowed from https://nycdatascience.com/blog/student-works/linlin_cheng_proj_5/: 
+  #generate a new variable to categorize funders:
+  fun<-as.character(data$funder)
+  
+  #
+  f_gov<-c('danida', 'A/co germany', 'belgian', 'british', 'england', 'german', 'germany',
+           'china', 'egypt', 'European Union', 'finland', 'japan', 'france', 'greec',
+           'netherlands', 'holland', 'holand', 'nethe', 'nethalan', 'netherla', 'netherlands',
+           'iran', 'irish', 'islam','italy', 'U.S.A', 'usa', 'usaid', 'swiss', 'swedish','korea', 'niger'
+  ) #'Jica',
+  NGO<-c('World Bank', 'Ngo', "Ngos", "Un","Un Habitat", "Un/wfp", "Undp", "Undp/aict", "Undp/ilo", "Unesco",                        
+         "Unhcr", "Unhcr/government", "Unice", "Unice/ Cspd", "Unicef", "Unicef/ Csp", "Unicef/african Muslim Agency", 
+         "Unicef/central", "Unicef/cspd", "Uniceg", "Unicet", "Unicrf", "Uniseg", "Unp/aict", "wwf", "wfp")
+  local_commu <- unique(c(agrep('commu', data$funder, value=TRUE), #includes commu for community, vill for village
+                          agrep('vill', data$funder, value=TRUE)))
+  tanz_gov<- unique(c(agrep('Government of Tanzania', data$funder, value=TRUE), #includes commu for community, vill for village
+                      agrep('wsdp', data$funder, value=TRUE)))               
+  
+  unique(fun[agrep('wsdp', fun)])
+  
+  data$funder = as.character(data$funder)
+  
+  temp = data$funder
+  
+  for (i in 1:length(NGO)){
+    temp = replace(temp, 
+                   agrep(NGO[i], temp),
+                   'UN_agencies')
+  }
+  
+  for (i in 1:length(f_gov)){
+    temp = replace(temp, 
+                   agrep(f_gov[i], temp),
+                   'foreign_gov')
+  }
+  
+  for (i in 1:length(local_commu)){
+    temp = replace(temp, 
+                   agrep(local_commu[i], temp), 
+                   "local_community")
+  }
+  
+  
+  for (i in 1:length(tanz_gov)){
+    temp = replace(temp, 
+                   agrep(tanz_gov[i], temp), 
+                   "Tanzania_Gov")
+  }
+  
+  
+  temp = replace(temp, 
+                 temp != "UN_agencies" & temp != 'foreign_gov' & temp != 'local_community' & temp != 'Tanzania_Gov',
+                 'other')
+  
+  #table(data$label, data$funder_cat)
+  data$funder_cat<-factor(temp)
+  return(data)
+  ########### END::: shameless borrowed from https://nycdatascience.com/blog/student-works/linlin_cheng_proj_5/: 
+}
+
+
+
 fixNAElevationValues <- function (){
   elevation_by_region <- water_table[!is.na(water_table$elevation),c("region","elevation")]
   elevation_by_region <- rbind(elevation_by_region, water_table_test[!is.na(water_table_test$elevation),c("region","elevation")])
@@ -65,6 +130,10 @@ fixNAElevationValues <- function (){
   
   water_table_test[is.na(water_table_test$elevation),]$elevation <<-
     round(merge(water_table_test[is.na(water_table_test$elevation),], elevation_by_region, by=c("region"))$mean_elevation)
+}
+
+fixSchemeManagement <- function() {
+  water_table_test$scheme_management <<- factor(water_table_test$scheme_management, levels=c(levels(water_table$scheme_management)))
 }
 
 
@@ -80,27 +149,29 @@ readAndCleanData <- function() {
   
   water_table <<- cleanData(water_table)
   water_table_test <<- cleanData(water_table_test)
-  
-
 
 }
 
-load_packages <- function (packagesToLoad){
-  for(packageToLoad in packagesToLoad) {
-    if (!require(packageToLoad, character.only = TRUE)) {
-      install.packages(packageToLoad)
-      library(packageToLoad, character.only = TRUE)
-    }
-  }
-}
-
-load_packages(c("dplyr"))
+library("dplyr")
+library("lubridate")
 readAndCleanData()
 fixNAElevationValues()
+water_table <<- addFunderCategory(water_table)
+water_table_test <<- addFunderCategory(water_table_test)
+fixSchemeManagement()
 remove(readAndCleanData)
 remove(cleanData)
 remove(elevation_file)
 remove(addElevation)
+
+set.seed(3)
+train_size <- .75
+training_rows <- sample(nrow(water_table), round(nrow(water_table)*train_size))
+water_table_train <<- water_table[training_rows,] 
+water_table_train_y <<- water_table_y[training_rows,] 
+water_table_holdout <<- water_table[-training_rows,] 
+water_table_holdout_y <<- water_table_y[-training_rows,] 
+
 
 
 writeFile <- function(fileName, data){

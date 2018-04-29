@@ -1,41 +1,41 @@
-################# START: variables and libraries for submission information
+source("WaterTable_LoadAndClean_v2.R")
+source("WaterTable_WriteResults.R")
+source("WaterTable_RandomForest_LoadData.R")
 
-numberOfTrees <- 500
-submissionName <- "Random Forest Simple with missing and imputed elevation added, funder category"
-
-library("randomForest")
 library("caret")
-library("e1071")
-library("lubridate")
+library("randomForest")
+################# START: variables and libraries for submission information
+numberOfTrees <- 2500
 ################# END: variables and libraries for submission information
 
-setwd("~/Documents/Predict 498")
-RootFilePath = "MSDS_Capstone//Water_Table//"
-OutputFilePath = "MSDS_Capstone//Water_Table//"
-source(paste(RootFilePath,"WaterTable_LoadAndClean.R", sep=""))
+#tuneRF(randomForest_data_full, water_table_y$status_group, ntreeTry = 25, stepFactor = 1.5, trace=TRUE)
+startTime <- proc.time()
+set.seed(42)
 
-
+randomForest_Training <- randomForest(water_table_train_y$status_group ~ ., data=randomForest_data_train, ntree=numberOfTrees)
+importance(randomForest_Training)
 
 set.seed(42)
-randomForest_Training <- randomForest(
-    water_table_train_y$status_group ~ .  
-      - id - gps_height - recorded_by - extraction_type  
-      - funder - construction_year - installer 
-      - wpt_name - subvillage 
-      - ward - lga  - scheme_name - scheme_management
-    , data=water_table_train
-    , ntree=numberOfTrees)
+confusionMatrix(predict(randomForest_Training, randomForest_data_holdout), water_table_holdout_y$status_group)
 
-confusionMatrix(water_table_holdout_y$status_group, predict(randomForest_Training, water_table_holdout))
- 
+### Optional step to add results to file
+# writeResultsRandomForest(randomForest_Training)
 
 
-####### run full model and write results to file
+
+
+
+
+####### run full model and write results to file - to enter for submission
+
 set.seed(42)
-randomForest_AllData <- randomForest(water_table_y$status_group ~ .  - id - gps_height - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  - scheme_name - scheme_management
-                                      , data=water_table, ntree=numberOfTrees)
+randomForest_AllData <- randomForest(water_table_y$status_group ~ .
+                                     , data=randomForest_data_full, ntree=numberOfTrees)
+writeResultsFileForSubmission(
+  paste("Random Forest Simple with elevation, age imputed, imputed log population, imputed elevation, imputed lat_long (no has_construction_year or bad_latlong) ntree=",numberOfTrees,", ",sep=""), 
+  predict(randomForest_AllData, water_table_test)
+)
 
-importance(randomForest_AllData)
+#importance(randomForest_AllData)
 
-writeFile(paste("Random Forest Simple with missing and imputed elevation added, funder category ntree=",numberOfTrees,sep=""), predict(randomForest_AllData, water_table_test))
 

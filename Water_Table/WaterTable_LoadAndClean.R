@@ -1,3 +1,9 @@
+library("dplyr")
+library("lubridate")
+library("tree")
+
+
+
 cleanData <- function(data) {
   data$date_recorded <- as.Date(data$date_recorded) 
   data$age <- 0
@@ -25,9 +31,13 @@ cleanData <- function(data) {
   
   data$monthRecorded <- month(data$date_recorded)
   
+  data$logpop <- log(data$population+1)
   data <- addElevation(data)
   return(data)
 }
+
+
+
 
 addElevation <- function(data) {
   
@@ -139,11 +149,11 @@ fixSchemeManagement <- function() {
 
 readAndCleanData <- function() {
   library(lubridate)
-  water_table <- read.csv(paste(RootFilePath, "tanzania-X-train.csv", sep=""))
-  water_table_y <<- read.csv(paste(RootFilePath, "tanzania-y-train.csv", sep=""))
-  water_table_test <- read.csv(paste(RootFilePath, "tanzania-X-test.csv", sep=""))
-  elevation_file1 <- read.csv(paste(RootFilePath, "elevation.csv", sep=""))
-  elevation_file2 <- read.csv(paste(RootFilePath, "test-elevation.csv", sep=""))
+  water_table <- read.csv("tanzania-X-train.csv")
+  water_table_y <<- read.csv("tanzania-y-train.csv")
+  water_table_test <- read.csv( "tanzania-X-test.csv")
+  elevation_file1 <- read.csv("elevation.csv")
+  elevation_file2 <- read.csv("test-elevation.csv")
   elevation_file <<- rbind(elevation_file1, elevation_file2)
   colnames(elevation_file) <- c("latitude","longitude","elevation")
   
@@ -152,8 +162,262 @@ readAndCleanData <- function() {
 
 }
 
-library("dplyr")
-library("lubridate")
+
+
+
+generateTrainingAndHoldout <- function() {
+  set.seed(3)
+  train_size <- .75
+  training_rows <- sample(nrow(water_table), round(nrow(water_table)*train_size))
+  
+  water_table_train <<- water_table[training_rows,] 
+  water_table_train_y <<- water_table_y[training_rows,] 
+  water_table_holdout <<- water_table[-training_rows,] 
+  water_table_holdout_y <<- water_table_y[-training_rows,] 
+}
+
+
+
+
+
+
+writeFile <- function(fileName, data){
+  toSave <- data.frame(water_table_test$id, data)
+  colnames(toSave) = c("id","status_group")
+  if(!endsWith(fileName, ".csv"))
+    fileName <- paste( fileName, ".csv")
+  write.csv(toSave, file=fileName, row.names=FALSE)
+}
+
+
+
+imputeElevation2 <- function() {
+  FieldList <- c(
+    #"id"
+    "amount_tsh"
+    #"date_recorded"
+    #,"funder"
+    ,"gps_height"
+    #,"installer"
+    ,"longitude"
+    ,"latitude"
+    #,"wpt_name"
+    ,"num_private"
+    ,"basin"
+    #,"subvillage"
+    #,"region"
+    ,"region_code"
+    ,"district_code"
+    #,"lga"
+    #,"ward"
+    #,"population"
+    ,"public_meeting"
+    #,"recorded_by"
+    #,"scheme_management"
+    #,"scheme_name"
+    ,"permit"
+    ,"construction_year"
+    #,"extraction_type"
+    ,"extraction_type_group"
+    ,"extraction_type_class"
+    #,"management"
+    ,"management_group"
+    ,"payment"
+    #,"payment_type"
+    ,"water_quality"
+    #,"quality_group"
+    #,"quantity"
+    ,"quantity_group"
+    ,"source"
+    ,"source_type"
+    ,"source_class"
+    #,"waterpoint_type"
+    ,"waterpoint_type_group"
+    #,"age"
+    #,"has_population"
+    #,"has_amount_tsh"
+    ,"has_construction_year"
+    #,"has_gps_height"
+    #,"has_cpg_missing_data"
+    #,"has_cpg_some_data"
+    #,"has_bad_latOrLong"
+    #,"monthRecorded"
+    ,"logpop"
+    #,"elevation"
+    #,"missing_elevation"
+    #,"funder_cat"
+    #,"age_imp"
+    #,"region_new"
+  )
+  
+  data_elevation_train <- water_table[,FieldList]
+  data_elevation_test <- water_table_test[,FieldList]
+
+  library(randomForest)
+  set.seed(42)
+  elevationForest <- randomForest(data_elevation_train[water_table$has_gps_height==1,]$gps_height ~ .,data=data_elevation_train[water_table$has_gps_height==1,], ntree=20)
+  water_table$elevation2 <- round(predict(elevationForest, data_elevation_train))
+  water_table[water_table$has_gps_height==1,]$elevation2 <- water_table[water_table$has_gps_height==1,]$gps_height
+
+  water_table_test$elevation2 <- round(predict(elevationForest, data_elevation_test))
+  water_table_test[water_table_test$has_gps_height==1,]$elevation2 <- water_table_test[water_table_test$has_gps_height==1,]$gps_height
+
+  water_table_test <<- water_table_test
+  water_table <<- water_table
+}
+
+
+addLogPop2 <- function(){
+  library(randomForest)
+  AddLogPopFieldList <- c(
+    #"id"
+    "amount_tsh"
+    #"date_recorded"
+    #,"funder"
+    ,"gps_height"
+    #,"installer"
+    ,"longitude"
+    ,"latitude"
+    #,"wpt_name"
+    ,"num_private"
+    ,"basin"
+    #,"subvillage"
+    #,"region"
+    ,"region_code"
+    ,"district_code"
+    #,"lga"
+    #,"ward"
+    #,"population"
+    ,"public_meeting"
+    #,"recorded_by"
+    #,"scheme_management"
+    #,"scheme_name"
+    ,"permit"
+    ,"construction_year"
+    #,"extraction_type"
+    ,"extraction_type_group"
+    ,"extraction_type_class"
+    #,"management"
+    ,"management_group"
+    ,"payment"
+    #,"payment_type"
+    ,"water_quality"
+    #,"quality_group"
+    #,"quantity"
+    ,"quantity_group"
+    ,"source"
+    ,"source_type"
+    ,"source_class"
+    #,"waterpoint_type"
+    ,"waterpoint_type_group"
+    #,"age"
+    #,"has_population"
+    #,"has_amount_tsh"
+    ,"has_construction_year"
+    #,"has_gps_height"
+    #,"has_cpg_missing_data"
+    #,"has_cpg_some_data"
+    #,"has_bad_latOrLong"
+    #,"monthRecorded"
+    ,"logpop"
+    #,"elevation"
+    #,"missing_elevation"
+    #,"funder_cat"
+    #,"age_imp"
+    #,"region_new"
+  )
+  
+  
+  data_age_train <- water_table[,AddLogPopFieldList]
+  data_age_test <- water_table_test[,AddLogPopFieldList]
+  
+  library(randomForest)
+  populationForest <- randomForest(logpop ~ .,data=data_age_train[data_age_train$logpop>0,], ntree=10)
+
+  data_age_train$logpop_imp <- predict(populationForest, data_age_train)
+  data_age_train[data_age_train$logpop>0,]$logpop_imp <- data_age_train[data_age_train$logpop>0,]$logpop
+
+  data_age_test$logpop_imp <- predict(populationForest, data_age_test)
+  data_age_test[data_age_test$logpop>0,]$logpop_imp <- data_age_test[data_age_test$logpop>0,]$logpop
+  
+  water_table$logpop_imp <- data_age_train$logpop_imp
+  water_table_test$logpop_imp <- data_age_test$logpop_imp
+  water_table <<- water_table
+  water_table_test <<- water_table_test
+}
+
+
+
+
+
+imputeAge <- function() {
+  treeAge <- tree(age ~ .  - date_recorded - gps_height - latitude -longitude -region - region_code - id - recorded_by - extraction_type  - funder - construction_year - installer - wpt_name - subvillage - ward - lga  
+                                 - scheme_name - scheme_management
+                                 , data=water_table[water_table$has_construction_year==1,])
+  
+  water_table$age_imp <- water_table$age
+  water_table[water_table$has_construction_year==0,]$age_imp <- predict(treeAge, water_table[water_table$has_construction_year==0,])
+  water_table$age_imp <- round(water_table$age_imp)
+  
+  water_table_test$age_imp <- water_table_test$age
+  water_table_test[water_table_test$has_construction_year==0,]$age_imp <- predict(treeAge, water_table_test[water_table_test$has_construction_year==0,])
+  water_table_test$age_imp <- round(water_table_test$age_imp)
+  
+  water_table_test <<- water_table_test
+  water_table <<- water_table
+}
+
+addNewRegion <- function() {
+  tz_region_train <- read.csv("TZ_region_train.csv")
+  water_table$region_new <- factor(toupper(tz_region_train$TZ_Region))
+  
+  
+  tz_region_test <- read.csv("TZ_region_test.csv")
+  water_table_test$region_new <- factor(toupper(tz_region_test$TZ_Region))
+
+  water_table_test <<- water_table_test
+  water_table <<- water_table
+}
+
+imputeLatLong <- function() {
+  
+  group_by_latitude <- water_table[water_table$has_bad_latOrLong==0,] %>%
+    group_by(region_code) %>%
+    summarise(median(latitude))
+  
+  
+  colnames(group_by_latitude) <- c("region_code","latitude_imp") 
+  
+  
+  
+  group_by_longitude <- water_table[water_table$has_bad_latOrLong==0,] %>%
+    group_by(region_code) %>%
+    summarise(median(longitude))
+  
+  colnames(group_by_longitude) <- c("region_code","longitude_imp") 
+  
+  group_by_longitude
+  
+  left_join(water_table, group_by_longitude, c=c("region_code"))
+  
+  water_table$longitude_imp <- left_join(water_table, group_by_longitude, c=c("region_code"))[,c("longitude_imp")]
+  water_table[water_table$has_bad_latOrLong==0,]$longitude_imp <- water_table[water_table$has_bad_latOrLong==0,]$longitude
+  
+  water_table$latitude_imp <- left_join(water_table, group_by_latitude, c=c("region_code"))[,c("latitude_imp")]
+  water_table[water_table$has_bad_latOrLong==0,]$latitude_imp <- water_table[water_table$has_bad_latOrLong==0,]$latitude
+  
+  
+  water_table_test$longitude_imp <- left_join(water_table_test, group_by_longitude, c=c("region_code"))[,c("longitude_imp")]
+  water_table_test[water_table_test$has_bad_latOrLong==0,]$longitude_imp <- water_table_test[water_table_test$has_bad_latOrLong==0,]$longitude
+  
+  water_table_test$latitude_imp <- left_join(water_table_test, group_by_latitude, c=c("region_code"))[,c("latitude_imp")]
+  water_table_test[water_table_test$has_bad_latOrLong==0,]$latitude_imp <- water_table_test[water_table_test$has_bad_latOrLong==0,]$latitude
+  
+  water_table_test <<- water_table_test
+  water_table <<- water_table
+  
+}
+
 readAndCleanData()
 fixNAElevationValues()
 water_table <<- addFunderCategory(water_table)
@@ -163,23 +427,16 @@ remove(readAndCleanData)
 remove(cleanData)
 remove(elevation_file)
 remove(addElevation)
+imputeAge() 
+addNewRegion()
+imputeElevation2()
+addLogPop2()
+imputeLatLong()
+generateTrainingAndHoldout() 
 
-set.seed(3)
-train_size <- .75
-training_rows <- sample(nrow(water_table), round(nrow(water_table)*train_size))
-water_table_train <<- water_table[training_rows,] 
-water_table_train_y <<- water_table_y[training_rows,] 
-water_table_holdout <<- water_table[-training_rows,] 
-water_table_holdout_y <<- water_table_y[-training_rows,] 
-
-
-
-writeFile <- function(fileName, data){
-  toSave <- data.frame(water_table_test$id, data)
-  colnames(toSave) = c("id","status_group")
-  if(!endsWith(fileName, ".csv"))
-    fileName <- paste(OutputFilePath, fileName, ".csv")
-  write.csv(toSave, file=fileName, row.names=FALSE)
-}
+# write.csv(water_table,"tanzania-X-train-v3.csv", row.names = FALSE)
+# write.csv(water_table_test,"tanzania-X-test-v3.csv", row.names = FALSE)
 
 
+write.csv(water_table,"v4.csv", row.names = FALSE)
+write.csv(water_table_test,"testv4.csv", row.names = FALSE)

@@ -1,18 +1,17 @@
-################# START: variables and libraries for submission information
-
+################# START: Libraries 
 
 library("randomForest")
 library("caret")
 library("e1071")
 library("lubridate")
-################# END: variables and libraries for submission information
+
+################# END: Libraries
 
 
-
-FieldList <- c(
+RandomForestFieldList <- c(
                #"id"
-               #"amount_tsh"
-               "date_recorded"
+               "amount_tsh"
+               ,"date_recorded"
                #,"funder"
                #,"gps_height"
                #,"installer"
@@ -42,12 +41,12 @@ FieldList <- c(
                ,"payment"
                #,"payment_type"
                ,"water_quality"
-               #,"quality_group"
+               ,"quality_group"
                #,"quantity"
                ,"quantity_group"
                ,"source"
                ,"source_type"
-               #,"source_class"
+               ,"source_class"
                ,"waterpoint_type"
                ,"waterpoint_type_group"
                #,"age"
@@ -71,8 +70,8 @@ FieldList <- c(
                ,"latitude_imp"
                )
 
-data_train <- water_table_train[,FieldList]
-data_holdout <- water_table_holdout[,FieldList]
-data_full <- water_table[,FieldList]
-data_test <- water_table_test[,FieldList]
+randomForest_data_train <- water_table_train[,RandomForestFieldList]
+randomForest_data_holdout <- water_table_holdout[,RandomForestFieldList]
+randomForest_data_full <- water_table[,RandomForestFieldList]
+randomForest_data_test <- water_table_test[,RandomForestFieldList]
  

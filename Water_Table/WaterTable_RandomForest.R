@@ -5,7 +5,7 @@ source("WaterTable_RandomForest_LoadData.R")
 library("caret")
 library("randomForest")
 ################# START: variables and libraries for submission information
-numberOfTrees <- 2500
+numberOfTrees <- 500
 ################# END: variables and libraries for submission information
 
 #tuneRF(randomForest_data_full, water_table_y$status_group, ntreeTry = 25, stepFactor = 1.5, trace=TRUE)
@@ -20,6 +20,8 @@ confusionMatrix(predict(randomForest_Training, randomForest_data_holdout), water
 
 ### Optional step to add results to file
 # writeResultsRandomForest(randomForest_Training)
+
+
 
 
 

@@ -210,6 +210,13 @@ for key in [x for x in object_vars if len(train_data[x].unique()) > 30]:
     feature_columns.append(tf.feature_column.indicator_column(
                             tf.feature_column.categorical_column_with_hash_bucket(key, hash_bucket_size=100)))
 
+# Create Crossed Columns
+feature_columns.append(tf.feature_column.embedding_column(tf.feature_column.crossed_column(
+                        [tf.feature_column.bucketized_column(tf.feature_column.numeric_column('latitude'),
+                                                             list(np.arange(-11.0,-1.0, .001))),
+                         tf.feature_column.bucketized_column(tf.feature_column.numeric_column('longitude'),
+                                                             list(np.arange(29.0,41, .001)))],
+                        5000), dimension=9))
 
 # Create input dataset
 hooks = [tf_debug.LocalCLIDebugHook()]
@@ -225,23 +232,25 @@ for key in feature_columns:
         feature_names.append(key.key)
 
 result_list = list()
-for x in range(10,100,5):
-    for x2 in range(8,24):
-        local_results = [x, x2]
-        hidden_layers = [x, x2]
-        pdinput = tf.estimator.inputs.pandas_input_fn(train_data[feature_names],
+for x in range(10,31,5):
+    for x2 in range(15,26):
+        for x3 in range(6,10):
+            local_results = [x, x2, x3]
+            hidden_layers = [x, x2, x3]
+            pdinput = tf.estimator.inputs.pandas_input_fn(train_data[feature_names],
                                                     train_target.status_group,
                                                     batch_size=100,
                                                     shuffle=False)
 
-        classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
-                                                hidden_units=hidden_layers,
-                                                n_classes=3,
-                                                label_vocabulary=list(train_target.status_group.unique()))
+            classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
+                                                    hidden_units=hidden_layers,
+                                                    n_classes=3,
+                                                    label_vocabulary=list(train_target.status_group.unique()),
+                                                    optimizer='Adam')
 
-        classifier.train(input_fn=pdinput)
-
-        result_list.append(local_results.append(classifier.evaluate(input_fn=pdinput)))
+            classifier.train(input_fn=pdinput)
+            local_results.append(classifier.evaluate(input_fn=pdinput))
+            result_list.append(local_results)
 
 
 test_input = tf.estimator.inputs.pandas_input_fn(x=test_data[feature_names], shuffle=False, batch_size=100)
@@ -255,3 +264,5 @@ with open(current_dir + 'tf1.csv', 'w') as f:
     f.write('id,status_group\n')
     for row in pred_list_with_id:
         f.write('{},{}\n'.format(row[0],row[1]))
+
+

@@ -16,7 +16,7 @@ FullFieldList <<- c(
   ,"has_gps_height"    # 1 if gps_height != 0
   ,"gps_height"
   ,"elevation"
-  ,"missing_elevation"    #if gps_height == 0 and it can't be imputed based on GPS coordinates
+  ,"missing_elevation"    #if gps_height == 0 and it can't be imputed (elevation) based on GPS coordinates
   ,"elevation2"           # imputed elevation based on a randomForest
   
   

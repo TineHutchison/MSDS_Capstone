@@ -38,6 +38,6 @@ writeResultsFileForSubmission(
   predict(randomForest_AllData, water_table_test)
 )
 
-#importance(randomForest_AllData)
+writeResultsFileForSubmission(paste("Random Forest with imputed elevation values and tsh_amount ntree=",numberOfTrees,sep=""), predict(randomForest_AllData, randomForest_data_test))
 
 

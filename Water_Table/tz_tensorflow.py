@@ -199,24 +199,28 @@ for key in [x for x in object_vars if len(train_data[x].unique()) <= 30]:
     if key == 'date_recorded':
         continue
     feature_columns.append(tf.feature_column.indicator_column(
-                             tf.feature_column.categorical_column_with_vocabulary_list(
-                               key, vocabulary_list=list(train_data[key].unique())
-    )))
+        tf.feature_column.categorical_column_with_vocabulary_list(
+            key, vocabulary_list=list(train_data[key].unique())
+        )))
 
 # Create hashed feature columns for categories with more than 30 unique values
 for key in [x for x in object_vars if len(train_data[x].unique()) > 30]:
     if key == 'date_recorded':
         continue
     feature_columns.append(tf.feature_column.indicator_column(
-                            tf.feature_column.categorical_column_with_hash_bucket(key, hash_bucket_size=100)))
+        tf.feature_column.categorical_column_with_hash_bucket(key, hash_bucket_size=100)))
+
+# Create bucket column for construction_year
+feature_columns.append(tf.feature_column.indicator_column(tf.feature_column.bucketized_column(
+    tf.feature_column.numeric_column('construction_year'), list(range(1960, 2011, 10)))))
 
 # Create Crossed Columns
 feature_columns.append(tf.feature_column.embedding_column(tf.feature_column.crossed_column(
-                        [tf.feature_column.bucketized_column(tf.feature_column.numeric_column('latitude'),
-                                                             list(np.arange(-11.0,-1.0, .001))),
-                         tf.feature_column.bucketized_column(tf.feature_column.numeric_column('longitude'),
-                                                             list(np.arange(29.0,41, .001)))],
-                        5000), dimension=9))
+    [tf.feature_column.bucketized_column(tf.feature_column.numeric_column('latitude'),
+                                         list(np.arange(-11.0,-1.0, .001))),
+     tf.feature_column.bucketized_column(tf.feature_column.numeric_column('longitude'),
+                                         list(np.arange(29.0,41, .001)))],
+    5000), dimension=9))
 
 # Create input dataset
 hooks = [tf_debug.LocalCLIDebugHook()]
@@ -226,6 +230,8 @@ hooks = [tf_debug.LocalCLIDebugHook()]
 feature_names = list()
 for key in feature_columns:
     if 'categorical_column' in dir(key):
+        if 'bucket' in key.categorical_column.name:
+            continue
         feature_names.append(key.categorical_column.key)
         continue
     else:
@@ -238,15 +244,16 @@ for x in range(10,31,5):
             local_results = [x, x2, x3]
             hidden_layers = [x, x2, x3]
             pdinput = tf.estimator.inputs.pandas_input_fn(train_data[feature_names],
-                                                    train_target.status_group,
-                                                    batch_size=100,
-                                                    shuffle=False)
+                                                          train_target.status_group,
+                                                          batch_size=100,
+                                                          shuffle=False
+                                                          )
 
             classifier = tf.estimator.DNNClassifier(feature_columns=feature_columns,
                                                     hidden_units=hidden_layers,
                                                     n_classes=3,
-                                                    label_vocabulary=list(train_target.status_group.unique()),
-                                                    optimizer='Adam')
+                                                    label_vocabulary=list(train_target.status_group.unique())
+                                                    )
 
             classifier.train(input_fn=pdinput)
             local_results.append(classifier.evaluate(input_fn=pdinput))

@@ -1,6 +1,8 @@
+library(dplyr)
+
 writeResultsRandomForest <- function(randomForest_Model) {
   # randomForest_Model <- randomForest_Training
-  filename <- "RandomForestScoring.csv"
+  filename <- "RandomForestScoring_organizedByCategory.csv"
   
   
   endTime <- proc.time()
@@ -9,71 +11,8 @@ writeResultsRandomForest <- function(randomForest_Model) {
   set.seed(42)
   cm <- confusionMatrix(water_table_holdout_y$status_group, predict(randomForest_Model, water_table_holdout))
 
-  
-  fullFieldList <- c(
-    "id"
-    ,"amount_tsh"
-    ,"date_recorded"
-    ,"funder"
-    ,"gps_height"
-    ,"installer"
-    ,"longitude"
-    ,"latitude"
-    ,"wpt_name"
-    ,"num_private"
-    ,"basin"
-    ,"subvillage"
-    ,"region"
-    ,"region_code"
-    ,"district_code"
-    ,"lga"
-    ,"ward"
-    ,"population"
-    ,"public_meeting"
-    ,"recorded_by"
-    ,"scheme_management"
-    ,"scheme_name"
-    ,"permit"
-    ,"construction_year"
-    ,"extraction_type"
-    ,"extraction_type_group"
-    ,"extraction_type_class"
-    ,"management"
-    ,"management_group"
-    ,"payment"
-    ,"payment_type"
-    ,"water_quality"
-    ,"quality_group"
-    ,"quantity"
-    ,"quantity_group"
-    ,"source"
-    ,"source_type"
-    ,"source_class"
-    ,"waterpoint_type"
-    ,"waterpoint_type_group"
-    ,"age"
-    ,"has_population"
-    ,"has_amount_tsh"
-    ,"has_construction_year"
-    ,"has_gps_height"
-    ,"has_cpg_missing_data"
-    ,"has_cpg_some_data"
-    ,"has_bad_latOrLong"
-    ,"monthRecorded"
-    ,"logpop"
-    ,"elevation"
-    ,"missing_elevation"
-    ,"funder_cat"
-    ,"age_imp"
-    ,"region_new"
-    ,"elevation2"
-    ,"logpop_imp"
-    ,"longitude_imp"
-    ,"latitude_imp"
-  )
-  
-  library(dplyr)
-  fullFieldList <- data.frame(fullFieldList)
+
+  fullFieldList <- data.frame(FullFieldList)
   colnames(fullFieldList) <- c("FieldName")
   fullFieldList$FieldName <- as.character(fullFieldList$FieldName)
   importance <- data.frame(importance(randomForest_Model))
@@ -106,3 +45,4 @@ writeResultsFileForSubmission <- function(filename, data) {
   }
   write.csv(toSave, file=filename, row.names=FALSE)
 }
+

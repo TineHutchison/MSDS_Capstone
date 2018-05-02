@@ -1,3 +1,6 @@
+source("WaterTable_LoadAndClean_v2.R")
+source("WaterTable_WriteResults.R")
+
 ################# START: Libraries 
 
 library("randomForest")
@@ -7,7 +10,8 @@ library("lubridate")
 
 ################# END: Libraries
 
-RandomForestFieldList <<- c(
+
+theFieldList <<- c(
   "id"
   ,"amount_tsh"
   ,"has_amount_tsh"
@@ -49,7 +53,7 @@ RandomForestFieldList <<- c(
   
   
   ### Make sure this is a factor. 
-  ,"district_code"
+  #,"district_code"
   
   ### other location based fields
   ,"basin"
@@ -109,8 +113,22 @@ RandomForestFieldList <<- c(
   #,"has_cpg_missing_data"    # missing all construction_year, population, gps_height
   #,"has_cpg_some_data"       # missing some of the fields construction_year, population, gps_height
 )
-randomForest_data_train <- water_table_train[,RandomForestFieldList]
-randomForest_data_holdout <- water_table_holdout[,RandomForestFieldList]
-randomForest_data_full <- water_table[,RandomForestFieldList]
-randomForest_data_test <- water_table_test[,RandomForestFieldList]
- 
+
+
+
+data_train <- water_table_train[,theFieldList]
+data_holdout <- water_table_holdout[,theFieldList]
+data_full <- water_table[,theFieldList]
+data_test <- water_table_test[,theFieldList]
+
+### put model here
+
+
+### uncomment next line for confusion matrix and accuracy stats
+# confusionMatrix(predict(model, data_holdout), water_table_holdout_y$status_group)
+
+
+### uncomment next line to write results for test file to file system in directory /SubmissionFiles/<name>
+# writeResultsFileForSubmission( "name of file"
+#   , predict(model, data_test))
+

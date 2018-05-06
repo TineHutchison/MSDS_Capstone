@@ -90,7 +90,7 @@ FieldList <- c(
 
 set.seed(42)
 
-
+glm_full_set <- water_table[,FieldList]
 glm_train_set <- water_table_train[,FieldList]
 glm_holdout_set <- water_table_holdout[,FieldList]
 
@@ -128,3 +128,30 @@ plot()
 hist(water_table[water_table$logpop>0,]$logpop)
 hist(imputePop)
 
+??zeroinfl
+install.packages("pscl")
+library(pscl)
+glm_train_set$population2 <- glm_train_set$population - 1
+glm_train_set[glm_train_set$population==0,]$population2 <-0
+#glm_train_set$population2 <- log(glm_train_set$population2 )
+zip.model <- zeroinfl(population2 ~  gps_height + longitude + latitude + basin + factor(region_code), data=glm_train_set[glm_train_set$population>0,])
+plot(predict(zip.model, water_table))
+plot(zip.model)
+
+
+
+#predict(mice_imp, glm_holdout_set)
+library(mice)
+glm_full_set[glm_full_set$population==0,]$logpop <- NA
+#glm_holdout_set[glm_holdout_set$population==0,]$logpop <- NA
+
+?mice
+mice_imp <- mice(glm_train_set, seed=500)
+?mice
+
+glm_train_set[glm_train_set$population==0,]$logpop <- mice_imp$imp$logpop$`1`
+hist(glm_train_set$log)
+#glm_train_set$logpop
+?mice
+hist(mice_imp$imp$logpop$`1`)
+hist( glm_train_set$logpop)

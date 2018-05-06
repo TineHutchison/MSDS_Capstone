@@ -8,12 +8,12 @@ library("lubridate")
 ################# END: Libraries
 
 RandomForestFieldList <<- c(
-  "id"
-  ,"amount_tsh"
-  ,"has_amount_tsh"
+  #"id"
+  #,"amount_tsh"
+  #,"has_amount_tsh"
   
   
-  ,"date_recorded"
+  "date_recorded"
   ,"monthRecorded"
   
   #### funder or funder_cat. 
@@ -49,7 +49,7 @@ RandomForestFieldList <<- c(
   
   
   ### Make sure this is a factor. 
-  ,"district_code"
+  #,"district_code"
   
   ### other location based fields
   ,"basin"
@@ -108,9 +108,11 @@ RandomForestFieldList <<- c(
   #### whether cpg has any missing data
   #,"has_cpg_missing_data"    # missing all construction_year, population, gps_height
   #,"has_cpg_some_data"       # missing some of the fields construction_year, population, gps_height
+  #,"funder_sz"
 )
 randomForest_data_train <- water_table_train[,RandomForestFieldList]
 randomForest_data_holdout <- water_table_holdout[,RandomForestFieldList]
 randomForest_data_full <- water_table[,RandomForestFieldList]
 randomForest_data_test <- water_table_test[,RandomForestFieldList]
  
+

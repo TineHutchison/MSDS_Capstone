@@ -49,7 +49,7 @@ RandomForestFieldList <<- c(
   
   
   ### Make sure this is a factor. 
-  #,"district_code"
+  ,"district_code"
   
   ### other location based fields
   ,"basin"
@@ -93,7 +93,7 @@ RandomForestFieldList <<- c(
   
   
   ,"water_quality"
-  ,"quality_group"
+  #,"quality_group"
   
   ### quantity 
   #,"quantity"
@@ -101,7 +101,7 @@ RandomForestFieldList <<- c(
   
   ,"source"
   ,"source_type"
-  ,"source_class"
+  #,"source_class"
   ,"waterpoint_type"
   ,"waterpoint_type_group"
   

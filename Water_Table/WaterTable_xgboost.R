@@ -1,7 +1,8 @@
 ################# START: variables and libraries for submission information
+source("WaterTable_LoadAndClean_v2.R")
 
-numberOfTrees <- 100
-submissionName <- "Random Forest Simple with missing and imputed elevation added, funder category"
+numberOfTrees <- 500
+submissionName <- "XG Boost"
 
 library("randomForest")
 library("caret")
@@ -222,7 +223,7 @@ fieldList <- c("date_recorded",
                #"management_group",
                #"payment",
                #"payment_type",
-               #"water_quality",
+               "water_quality",
                #"quality_group",
                #"quantity",
                #"quantity_group",
@@ -231,11 +232,11 @@ fieldList <- c("date_recorded",
                #"waterpoint_type",
                #"waterpoint_type_group",
                #"has_amount_tsh",
-               "has_construction_year",
+               #"has_construction_year",
                "monthRecorded",
                #"elevation",
                "elevation2",
-               "missing_elevation",
+               #"missing_elevation",
                #"funder_cat",
                "logpop_imp", 
                "age_imp"
@@ -244,7 +245,7 @@ fieldList <- c("date_recorded",
               #"pc3", 
               #"pc4", 
               #"pc5"
-              , "amount_tsh"
+              #, "amount_tsh"
                )
 
 xgboost_train <- water_table_train[,fieldList]
@@ -284,7 +285,7 @@ xgboost_holdout <- data.matrix(xgboost_holdout)
 
 
 
-
+set.seed(45)
 predictions <- predict(xgboost_Training, xgboost_holdout, type="response")
 results <- data.frame(water_table_holdout$id,
                       predictions[(1:length(predictions)) %% 3 == 1],
@@ -293,9 +294,57 @@ results <- data.frame(water_table_holdout$id,
 colnames(results)[2:4] <- c("functional", "non functional", "functional needs repair")
 
 xgboost_values <- apply(results[,2:4],1, getMax)
+str(factor(xgboost_values))
 
 confusionMatrix(water_table_holdout_y$status_group, factor(xgboost_values))
 
 
 
 
+
+
+
+
+set.seed(45)
+xgboost_target <- rep(0,nrow(water_table_y))
+xgboost_target[water_table_y$status_group == "non functional"] <- 1
+xgboost_target[water_table_y$status_group == "functional needs repair"] <- 2
+
+xgboost_full <- water_table[,fieldList]
+xgboost_full <- add_dummies(xgboost_full, water_table)
+
+
+xgboost_full <- data.matrix(xgboost_full)
+xgboost_full_level <- xgb.DMatrix(data = xgboost_full, label = xgboost_target) 
+
+
+xgboost_model_full <- xgboost(data=xgboost_full_level, 
+        num_class = 3,
+        nrounds = numberOfTrees, 
+        max_depth = 16,
+        objective = "multi:softprob", 
+        print_every_n = 20)
+
+
+
+xgboost_test <-water_table_test[,fieldList]
+
+xgboost_test <- add_dummies(xgboost_test, water_table_test)
+xgboost_test <- data.matrix(xgboost_test)
+
+
+
+set.seed(45)
+predictions <- predict(xgboost_model_full, xgboost_test, type="response")
+results <- data.frame(water_table_test$id,
+                      predictions[(1:length(predictions)) %% 3 == 1],
+                      predictions[(1:length(predictions)) %% 3 == 2],
+                      predictions[(1:length(predictions)) %% 3 == 0])
+colnames(results)[2:4] <- c("functional", "non functional", "functional needs repair")
+
+xgboost_values <- apply(results[,2:4],1, getMax)
+
+#head(water_table_test$id)
+#head(results$water_table_test.id)
+
+writeResultsFileForSubmission(paste("XGBoostntree=",numberOfTrees,sep=""), xgboost_values)

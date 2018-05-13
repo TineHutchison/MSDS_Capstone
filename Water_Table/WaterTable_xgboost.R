@@ -1,7 +1,7 @@
 ################# START: variables and libraries for submission information
 source("WaterTable_LoadAndClean_v2.R")
 
-numberOfTrees <- 500
+numberOfTrees <- 1000
 submissionName <- "XG Boost"
 
 library("randomForest")
@@ -246,6 +246,7 @@ fieldList <- c("date_recorded",
               #"pc4", 
               #"pc5"
               #, "amount_tsh"
+              ,"log_amount_tsh"
                )
 
 xgboost_train <- water_table_train[,fieldList]
@@ -287,6 +288,8 @@ xgboost_holdout <- data.matrix(xgboost_holdout)
 
 set.seed(45)
 predictions <- predict(xgboost_Training, xgboost_holdout, type="response")
+
+### score code inspired by code at: https://github.com/drivendataorg/pump-it-up/blob/master/benedekrozemberczki/5_xgbooster_predictions.R
 results <- data.frame(water_table_holdout$id,
                       predictions[(1:length(predictions)) %% 3 == 1],
                       predictions[(1:length(predictions)) %% 3 == 2],
@@ -336,6 +339,8 @@ xgboost_test <- data.matrix(xgboost_test)
 
 set.seed(45)
 predictions <- predict(xgboost_model_full, xgboost_test, type="response")
+
+### score code inspired by code at: https://github.com/drivendataorg/pump-it-up/blob/master/benedekrozemberczki/5_xgbooster_predictions.R
 results <- data.frame(water_table_test$id,
                       predictions[(1:length(predictions)) %% 3 == 1],
                       predictions[(1:length(predictions)) %% 3 == 2],

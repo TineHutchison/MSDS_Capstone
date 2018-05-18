@@ -5,9 +5,10 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import Pipeline, FeatureUnion
 import Water_Table.SparseInteractions as SparseInteractions
 from sklearn.preprocessing import FunctionTransformer, Imputer
+from sklearn.model_selection import GridSearchCV
 
 #Loading the training data
-current_dir = '/Users/thutchison15/PycharmProjects/MSDS_Capstone/Water_Table/'
+current_dir = '/home/tine/PycharmProjects/pred498/MSDS_Capstone/Water_Table/'
 train_data = pd.read_csv(current_dir + 'tanzania-X-train-v3.csv', header=0)
 train_target = pd.read_csv(current_dir + 'tanzania-y-train.csv', header=0)
 
@@ -48,12 +49,14 @@ def combine_text_columns(df):
     # Join all text items in a row that have a space in between
     return text_data.apply(lambda x: " ".join(x), axis=1)
 
+def return_numerics(df):
+    return df[continuous_columns + boolean_columns]
+
 # Perform preprocessing
 get_text_data = FunctionTransformer(combine_text_columns, validate=False)
-get_numeric_data = FunctionTransformer(lambda x: x[continuous_columns + boolean_columns], validate=False)
+get_numeric_data = FunctionTransformer(return_numerics, validate=False)
 
-pl = Pipeline([
-        ('union', FeatureUnion(
+pl = Pipeline([('union', FeatureUnion(
             transformer_list = [
                 ('numeric_features', Pipeline([
                     ('selector', get_numeric_data),
@@ -62,17 +65,25 @@ pl = Pipeline([
                 ('text_features', Pipeline([
                     ('selector', get_text_data),
                     ('vectorizer', CountVectorizer(token_pattern=TOKENS_ALPHANUMERIC,
-                                                   ngram_range=(1,2))),
-                    ('dim_red', SelectKBest(k=100))
+                                                   ngram_range=(1,2)))
                 ]))
-             ]
+            ]
         )),
-        ('clf', RandomForestClassifier())
-    ])
+    ('dim_red', SelectKBest(k=100)),
+    ('clf', RandomForestClassifier())
+])
 
 results_map = {'functional':0, 'non functional': 1, 'functional needs repair':2}
 
-pl.fit(train_data, train_target.status_group.apply(lambda x: results_map[x]))
+parameters = dict(dim_red__k=[50, 75, 100, 125],
+              clf__n_estimators=[50, 100, 200],
+              clf__min_samples_split=[2, 3, 4, 5, 10])
+
+cv = GridSearchCV(pl, param_grid=parameters, n_jobs=9)
+
+train_target_num = train_target.status_group.apply(lambda x: results_map[x])
+
+cv.fit(train_data, train_target_num)
 
 pl.score(train_data, train_target.status_group.apply(lambda x: results_map[x]))
 
@@ -82,7 +93,7 @@ y_pred = [inverse_results_map[x] for x in list(y_pred)]
 
 pred_list_with_id = list(zip(test_data.id.values, y_pred))
 
-with open(current_dir + 'RF_with_text_1.csv', 'w') as f:
+with open(current_dir + 'RF_with_text_2.csv', 'w') as f:
     f.write('id,status_group\n')
     for row in pred_list_with_id:
         f.write('{},{}\n'.format(row[0],row[1]))

@@ -1,0 +1,46 @@
+version: '2'
+services:
+  shiny:
+    #image: rocker/shiny
+    build: .
+    container_name: shiny_1
+    volumes:
+      - ./appdata/shiny/shinyapps/:/srv/shiny-server/
+      - ./appdata/shiny/shinylog/:/var/log/shiny-server/
+    ports:
+      #- 127.0.0.1:3838:3838
+      - 80:3838
+    environment:
+      - PUID=1000
+      - PGID=1000
+    restart:
+      unless-stopped
+    networks:
+      - pnznet
+#  letsencrypt:
+#    privileged: true
+#    image: linuxserver/letsencrypt
+#    container_name: letsencrypt_1
+#    volumes:
+#      - ./appdata/letsencrypt/config2:/config
+#      #- ./appdata/letsencrypt/site-confs:/config/nginx/site-confs
+#    ports:
+#      - 443:443
+#    environment:
+#      - PUID=1000
+#      - PGID=1000
+#      - EMAIL=austin@auz10.com
+#      - URL=auz10.com
+#      - SUBDOMAINS=tanzania
+#      - TZ='America/Los_Angeles'
+#      - ONLY_SUBDOMAINS=true
+#    restart:
+#      unless-stopped
+#    depends_on:
+#      - shiny
+#    networks:
+#      - pnznet
+networks:
+  pnznet:
+#    external:
+#      name: pnz_default

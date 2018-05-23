@@ -60,7 +60,7 @@ class SparseInteractions(BaseEstimator, TransformerMixin):
         return sparse.hstack([X] + out_mat)
 
 #Loading the training data
-current_dir = '/Users/thutchison15/PycharmProjects/MSDS_Capstone/Water_Table/'
+current_dir = '/home/tine/PycharmProjects/pred498/MSDS_Capstone/Water_Table/'
 train_data = pd.read_csv(current_dir + 'tanzania-X-train-v3.csv', header=0)
 train_target = pd.read_csv(current_dir + 'tanzania-y-train.csv', header=0)
 
@@ -133,11 +133,11 @@ pl3 = Pipeline([('union',
 
 results_map = {'functional':0, 'non functional': 1, 'functional needs repair':2}
 train_target_num = train_target.status_group.apply(lambda x: results_map[x])
-params = {'clf__learning_rate': [0.01,0.1,0.3,0.5,0.8],
-          'clf__max_depth': [3,6,9,12,20],
-          'clf__gamma': [0, 1, 3, 5, 10]}
+params = {'clf__learning_rate': [0.8],
+          'clf__max_depth': [9],
+          'clf__gamma': [0]}
 
-cv3 = GridSearchCV(pl3, param_grid=params, cv=5)
+cv3 = GridSearchCV(pl3, param_grid=params, cv=4, n_jobs=10)
 cv3.fit(train_data, train_target_num)
 #pl3.fit(train_data, train_target_num)
 

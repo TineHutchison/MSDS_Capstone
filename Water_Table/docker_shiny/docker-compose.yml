@@ -1,8 +1,8 @@
 version: '2'
 services:
   shiny:
-    #image: rocker/shiny
     build: .
+    image: shiny:v1
     container_name: shiny_1
     volumes:
       - ./appdata/shiny/shinyapps/:/srv/shiny-server/

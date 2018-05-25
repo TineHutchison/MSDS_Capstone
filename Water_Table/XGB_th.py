@@ -4,11 +4,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_selection import SelectKBest
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import FunctionTransformer, Imputer, MaxAbsScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV
+
+
 """
-from https://github.com/drivendataorg/box-plots-sklearn/blob/master/src/features/SparseInteractions.py
+SparseInteractions from https://github.com/drivendataorg/box-plots-sklearn/blob/master/src/features/SparseInteractions.py
 """
 from itertools import combinations
 
@@ -133,17 +133,21 @@ pl3 = Pipeline([('union',
 
 results_map = {'functional':0, 'non functional': 1, 'functional needs repair':2}
 train_target_num = train_target.status_group.apply(lambda x: results_map[x])
+params = {'clf__learning_rate': [0.8],
+          'clf__max_depth': [9],
+          'clf__gamma': [0]}
 
-#cv3.fit(train_data, train_target_num)
-pl3.fit(train_data, train_target_num)
+cv3 = GridSearchCV(pl3, param_grid=params, cv=4, n_jobs=10)
+cv3.fit(train_data, train_target_num)
+#pl3.fit(train_data, train_target_num)
 
 inverse_results_map = {0:'functional', 1:'non functional', 2:'functional needs repair'}
-y_pred3 = pl3.predict(test_data)
+y_pred3 = cv3.predict(test_data)
 y_pred3 = [inverse_results_map[x] for x in list(y_pred3)]
 
 pred_list_with_id3 = list(zip(test_data.id.values, y_pred3))
 
-with open(current_dir + 'XGB_with_text_grid_search_and interactions1.csv', 'w') as f:
+with open(current_dir + 'XGB_with_text_grid_search_and interactions2.csv', 'w') as f:
     f.write('id,status_group\n')
     for row in pred_list_with_id3:
         f.write('{},{}\n'.format(row[0],row[1]))

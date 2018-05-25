@@ -28,18 +28,18 @@ FieldList <- c(
   ,"num_private"
   ,"basin"
   #,"subvillage"
-  #,"region"
-  ,"region_code"
+  ,"region"
+  #,"region_code"
   ,"district_code"
   #,"lga"
   #,"ward"
-  #,"population"
+  ,"population"
   ,"public_meeting"
   #,"recorded_by"
   #,"scheme_management"
   #,"scheme_name"
   ,"permit"
-  ,"construction_year"
+  #,"construction_year"
   #,"extraction_type"
   ,"extraction_type_group"
   ,"extraction_type_class"
@@ -59,13 +59,13 @@ FieldList <- c(
   #,"age"
   #,"has_population"
   #,"has_amount_tsh"
-  ,"has_construction_year"
+  #,"has_construction_year"
   #,"has_gps_height"
   #,"has_cpg_missing_data"
   #,"has_cpg_some_data"
   #,"has_bad_latOrLong"
   #,"monthRecorded"
-  ,"logpop"
+  #,"logpop"
   #,"elevation"
   #,"missing_elevation"
   #,"funder_cat"
@@ -73,24 +73,31 @@ FieldList <- c(
   #,"region_new"
 )
 
-data_train <- water_table_train[,FieldList]
-data_holdout <- water_table_holdout[,FieldList]
+library(tree)
+
+data_train <- water_table_train[water_table_train$has_gps_height==1,FieldList]
+data_holdout <- water_table_holdout[water_table_holdout$has_gps_height==1,FieldList]
+data_full <- water_table[water_table$has_gps_height==1,FieldList]
+data_missing <- water_table[water_table$has_gps_height==0,FieldList]
+data_missing_test <- water_table_test[water_table_test$has_gps_height==0,FieldList]
+
+
 elevationTree <- tree(data_train$gps_height ~ .,data=data_train)
 plot(data_holdout$gps_height, predict(elevationTree, data_holdout))
 mean(abs(data_holdout$gps_height- predict(elevationTree, data_holdout)))
 
 
 library(randomForest)
-elevationForest <- randomForest(data_train$gps_height ~ .,data=data_train, ntree=5)
+elevationForest <- randomForest(data_train$gps_height ~ .,data=data_train, ntree=30)
 plot(data_holdout$gps_height, predict(elevationForest, data_holdout))
 mean(abs(data_holdout$gps_height- predict(elevationForest, data_holdout)))
-
+plot(elevationForest$mse)
 
 mean(data_train$gps_height, data_train$region_code)
 group_by(data_train$region_code, sum(data_train$gps_height))
 
 group_by_gps_height <- data_train[data_train$gps_height!=0,] %>%
-  group_by(region_code) %>%
+  group_by(region) %>%
   summarise(mean(gps_height), round(median(gps_height)))
 
 
@@ -98,3 +105,26 @@ head(merge(data_holdout, group_by_gps_height, c("region_code")))
 
 plot(data_holdout$gps_height)
 
+
+
+library(randomForest)
+elevationForest <- randomForest(gps_height ~ .,data=data_full, ntree=30)
+plot(data_holdout$gps_height, predict(elevationForest, data_holdout))
+mean(abs(data_holdout$gps_height- predict(elevationForest, data_holdout)))
+plot(elevationForest$mse)
+
+hist(water_table_test$elevation2)
+hist(water_table_test$gps_height)
+water_table$elevation2 <- water_table$gps_height
+water_table[water_table$has_gps_height==0,]$elevation2 <- round(predict(elevationForest, data_missing))
+
+water_table_test$elevation2 <- water_table_test$gps_height
+water_table_test[water_table_test$has_gps_height==0,]$elevation2 <- predict(elevationForest,data_missing_test)
+
+
+plot(water_table[!water_table$has_gps_height,]$elevation, water_table[!water_table$has_gps_height,]$elevation2)
+mean(abs(water_table[!water_table$has_gps_height,]$elevation - water_table[!water_table$has_gps_height,]$elevation2))
+
+generateTrainingAndHoldout()
+
+writeFiles()

@@ -40,7 +40,7 @@ writeResultsFileForSubmission <- function(filename, data) {
   if(!startsWith(filename, "SubmissionFiles"))
     filename <- paste("SubmissionFiles/",filename,sep="")
   if(!endsWith(filename, ".csv")){
-    filename <- paste(filename,Sys.time(), sep="")
+    #filename <- paste(filename,Sys.time(), sep="")
     filename <- paste(filename, ".csv", sep="")
   }
   write.csv(toSave, file=filename, row.names=FALSE)

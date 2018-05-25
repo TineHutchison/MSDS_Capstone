@@ -331,6 +331,8 @@ xgboost_holdout <- data.matrix(xgboost_holdout)
 
 set.seed(45)
 predictions <- predict(xgboost_Training, xgboost_holdout, type="response")
+
+### score code inspired by code at: https://github.com/drivendataorg/pump-it-up/blob/master/benedekrozemberczki/5_xgbooster_predictions.R
 results <- data.frame(water_table_holdout$id,
                       predictions[(1:length(predictions)) %% 3 == 1],
                       predictions[(1:length(predictions)) %% 3 == 2],
@@ -380,6 +382,8 @@ xgboost_test <- data.matrix(xgboost_test)
 
 set.seed(45)
 predictions <- predict(xgboost_model_full, xgboost_test, type="response")
+
+### score code inspired by code at: https://github.com/drivendataorg/pump-it-up/blob/master/benedekrozemberczki/5_xgbooster_predictions.R
 results <- data.frame(water_table_test$id,
                       predictions[(1:length(predictions)) %% 3 == 1],
                       predictions[(1:length(predictions)) %% 3 == 2],

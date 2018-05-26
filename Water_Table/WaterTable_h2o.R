@@ -9,6 +9,7 @@ library("h2o" )
 
 #source("WaterTable_LoadAndClean.R")
 source("WaterTable_LoadAndClean_v2.R")
+source("WaterTable_WriteResults.R")
 set.seed(400)
 RandomForestFieldList <<- c(
   #"id"
@@ -114,11 +115,10 @@ RandomForestFieldList <<- c(
   
   #### whether cpg has any missing data
   #,"has_cpg_missing_data"    # missing all construction_year, population, gps_height
-  #,"has_cpg_some_data"       # missing some of the fields construction_year, population, gps_height
+  ,"has_cpg_some_data"       # missing some of the fields construction_year, population, gps_height
   #,"funder_sz"
   #,"has_scheme_name"
 )
-
 
 randomForest_data_train <- water_table_train[,RandomForestFieldList]
 randomForest_data_holdout <- water_table_holdout[,RandomForestFieldList]
@@ -127,38 +127,41 @@ randomForest_data_train$days <- as.integer(as.Date("14/01/01", format="%y/%m/%d"
 randomForest_data_holdout$days <- as.integer(as.Date("14/01/01", format="%y/%m/%d") - randomForest_data_holdout$date_recorded) 
 
 
+
 library(h2o)
-h2o.shutdown(prompt=FALSE)
-Sys.sleep(5)
+#h2o.shutdown(prompt=FALSE)
+
 h2o.init(nthreads=-1)
+h2o.removeAll()
+?h2o.init
 
 set.seed(42)
-
-
-
-water_table_train_h2o <- cbind(randomForest_data_train, water_table_train_y$status_group)
-water_table_holdout_h2o <- cbind(randomForest_data_holdout, water_table_holdout_y$status_group) 
-
-colnames(water_table_train_h2o)[ncol(water_table_train_h2o)] <- "status_group"
-colnames(water_table_holdout_h2o)[ncol(water_table_train_h2o)] <- "status_group"
-
-trainH2o<-as.h2o(water_table_train_h2o)
-features<-colnames(trainH2o)
-
-holdoutH2o<-as.h2o(water_table_holdout_h2o)
-randomForesth2o_trainData <- h2o.randomForest(features,"status_group", trainH2o, ntrees=1000, mtries=9, max_depth=22, nbins=22, seed=42)
-summary(randomForesth2o_trainData)
-h2o.varimp_plot(randomForesth2o_trainData)
-
-
-
-predictionH2o <- predict(randomForesth2o_trainData, holdoutH2o)
-confusionMatrix(as.data.frame(predictionH2o$predict)$predict, water_table_holdout_y$status_group)
-
-vip <- as.data.frame(h2o.varimp(randomForesth2o_trainData))
-print(vip)
-
-
+# 
+# 
+# 
+# water_table_train_h2o <- cbind(randomForest_data_train, water_table_train_y$status_group)
+# water_table_holdout_h2o <- cbind(randomForest_data_holdout, water_table_holdout_y$status_group)
+# 
+# colnames(water_table_train_h2o)[ncol(water_table_train_h2o)] <- "status_group"
+# colnames(water_table_holdout_h2o)[ncol(water_table_train_h2o)] <- "status_group"
+# 
+# trainH2o<-as.h2o(water_table_train_h2o)
+# features<-colnames(trainH2o)
+# 
+# holdoutH2o<-as.h2o(water_table_holdout_h2o)
+# randomForesth2o_trainData <- h2o.randomForest(features,"status_group", trainH2o, ntrees=1000, mtries=9, max_depth=22, nbins=22, seed=42)
+# summary(randomForesth2o_trainData)
+# h2o.varimp_plot(randomForesth2o_trainData)
+# 
+# 
+# 
+# predictionH2o <- predict(randomForesth2o_trainData, holdoutH2o)
+# confusionMatrix(as.data.frame(predictionH2o$predict)$predict, water_table_holdout_y$status_group)
+# 
+# vip <- as.data.frame(h2o.varimp(randomForesth2o_trainData))
+# print(vip)
+# 
+# 
 
 
 
@@ -188,7 +191,10 @@ testH2o <- as.h2o(water_table_test_h2o)
 ### Test #2 - randomForesth2o_AllData <- h2o.randomForest(features,mtries=9, max_depth=21, nbins=21,"status_group", fullH2o, ntrees=2500, seed=42)
 #### Original - randomForesth2o_AllData <- h2o.randomForest(features,mtries=16,"status_group", fullH2o, ntrees=2500, seed=42)
 randomForesth2o_AllData <- h2o.randomForest(features,mtries=9, max_depth=21, nbins=21,"status_group", fullH2o, ntrees=2500, seed=42)
+randomForesth2o_AllData
 predictionH2o <- predict(randomForesth2o_AllData, testH2o)
 
-writeResultsFileForSubmission("Winning model - Random Forest (h2o) Simple added (+high factor vars) and post grid search (21-9-21), trees=2500", as.data.frame(predictionH2o$predict))
+writeResultsFileForSubmission("Winning model - h20 elevation imputation(with has_cpg_some_data ) - Random Forest (h2o) Simple added (+high factor vars) and post grid search (21-9-21), trees=2500", as.data.frame(predictionH2o$predict))
 
+h2o.varimp_plot(randomForesth2o_AllData)
+#h2o.shutdown(prompt=FALSE)

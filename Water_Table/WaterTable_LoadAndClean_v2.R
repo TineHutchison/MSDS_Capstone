@@ -112,6 +112,8 @@ loadFiles <- function() {
   water_table$district_code <<- factor(water_table$district_code)
   water_table_test$region_code <<- factor(water_table_test$region_code)
   water_table_test$district_code <<- factor(water_table_test$district_code)
+  water_table$elevation2 <<- as.numeric(water_table$elevation2)
+  water_table_test$elevation2 <<- as.numeric(water_table_test$elevation2)
 }
 
 writeFiles <- function() {

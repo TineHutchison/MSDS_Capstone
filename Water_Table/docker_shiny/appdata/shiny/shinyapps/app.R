@@ -6,14 +6,15 @@ library(dplyr)
 library(ggplot2)
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Pump It Up - Tanzania Dashboard"),
+  dashboardHeader(title = "Daft Pumps"),
 	#dashboardHeader(title = tags$a(href='http://daftpumps.com',
-                                    #tags$img(src='logo.png')))  ,
+                                    #tags$img(src='dplogo.png'))),
 ## Sidebar content
   dashboardSidebar(
     sidebarMenu(
+      menuItem("Recent Reports of Failure", tabName = "DataTable_recent", icon = icon("th")),
       menuItem("Construction Year", tabName = "dashboard", icon = icon("dashboard")),
-      menuItem("View Data", tabName = "DataTable", icon = icon("th")),
+      menuItem("View Full Data", tabName = "DataTable", icon = icon("th")),
       menuItem("Quantity by Management Type", tabName = "Tableaquantbymgmt3", icon = icon("dashboard")),
       menuItem("Regions vs Wards", tabName = "TableaRegionsvsWards", icon = icon("dashboard")),
       menuItem("Pump Age Map", tabName = "Tableaage", icon = icon("map")),
@@ -25,11 +26,18 @@ ui <- dashboardPage(
   ),
   ## Body content
   dashboardBody(
+	tags$head(tags$style(HTML('
+	      .main-header .logo {
+		font-family: "Montserrat", sans-serif;
+		font-weight: bold;
+		font-size: 24px;
+	      }
+	    '))),
     tabItems(
       # First tab content
       tabItem(tabName = "dashboard",
               fluidRow(
-                box(plotOutput("plot1", height = 500))
+                box(plotOutput("plot1", height = "400px"))
 		),
                 
               fluidRow(
@@ -39,6 +47,9 @@ ui <- dashboardPage(
                 )
               )
       ),
+	tabItem(tabName = "DataTable_recent",
+		        # Create a new row for the table.
+		        fluidRow(DT::dataTableOutput("recent_table"))), 
      tabItem(tabName = "DataTable",
               fluidRow(column(
                 4,
@@ -160,6 +171,15 @@ data_x <-
 	    
 	    data
 	  }))
+	output$recent_table <- DT::renderDataTable(DT::datatable({
+	  columns <- c("id", "longitude", "latitude", "date_recorded", "wpt_name", "extraction_type_class", "waterpoint_type", "population", "basin")
+	    data_nonf <- data[data$status_group == "non functional",columns]
+
+	    data_nonf <- data_nonf[order(data_nonf$date_recorded, decreasing = TRUE),]
+	  
+	  
+	    data_nonf
+	}))
 
 
 }
